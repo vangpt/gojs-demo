@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>GoJS Drag & Drop</title>
+    <script src="https://unpkg.com/gojs/release/go.js"></script>
+    <link rel="stylesheet" href="./theme/styles/common/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="container">
+        <!-- <div data-include="palette"></div> -->
+        <div class="panel-left">
+          <h3>Demo GoJS</h3>
+          <div id="paletteDiv"></div>
+        </div>
+        <div id="main-diagram">
+          <div id="diagram-sheet-1" class="diagram-content active"></div>
+        </div>
+
+        <div class="panel-right">
+          <h3>Inspector</h3>
+          <div id="inspectorDiv"></div>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <div id="sheet-tabs" class="sheet-tabs">
+          <div id="sheet-tab-1" class="sheet-tab active">Sheet 1</div>
+        </div>
+
+        <button id="add-sheet-btn" class="add-sheet-btn">+</button>
+      </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+    <script src="./core/helpers/include.js"></script>
+    <script>
+      let sheetCount = 1;
+      document.addEventListener("DOMContentLoaded", () => {
+        const addBtn = document.getElementById("add-sheet-btn");
+        const tabsContainer = document.getElementById("sheet-tabs");
+        const mainDiagramElement = document.getElementById("main-diagram");
+        addBtn.addEventListener("click", () => {
+          sheetCount++;
+          const newTab = document.createElement("div");
+          newTab.className = "sheet-tab";
+          newTab.id = `sheet-tab-${sheetCount}`;
+          newTab.textContent = `Sheet ${sheetCount}`;
+          tabsContainer.appendChild(newTab);
+          setActiveTab(newTab);
+
+          const newMainDiagram = document.createElement("div");
+          newMainDiagram.id = `diagram-sheet-${sheetCount}`;
+          newMainDiagram.className = "diagram-content";
+          newMainDiagram.textContent = `diagram sheet ${sheetCount}`;
+          mainDiagramElement.appendChild(newMainDiagram);
+          setActiveDiagram(newMainDiagram);
+
+          const $ = go.GraphObject.make;
+          const myDiagram = $(go.Diagram, `diagram-sheet-${sheetCount}`, {
+            "undoManager.isEnabled": true,
+          });
+        });
+        tabsContainer.addEventListener("click", (e) => {
+          if (e.target.classList.contains("sheet-tab")) {
+            setActiveTab(e.target);
+            const sheetId = e.target.id.split("-")[2];
+            const diagram = document.getElementById(`diagram-sheet-${sheetId}`);
+            setActiveDiagram(diagram);
+          }
+        });
+        function setActiveTab(tab) {
+          document
+            .querySelectorAll(".sheet-tab")
+            .forEach((t) => t.classList.remove("active"));
+          tab.classList.add("active");
+        }
+
+        function setActiveDiagram(diagram) {
+          document
+            .querySelectorAll(".diagram-content")
+            .forEach((t) => t.classList.remove("active"));
+          diagram.classList.add("active");
+        }
+      });
+    </script>
+  </body>
+</html>
