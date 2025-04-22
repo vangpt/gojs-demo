@@ -3,7 +3,7 @@ export const nodeDataArray = [
     key: 1,
     text: "Start",
     color: "#e0ffe0",
-    source: "https://img.icons8.com/ios/50/000000/play.png",
+    source: "../../assets/images/toeic.png",
     tooltip: "Bắt đầu",
   },
 ];

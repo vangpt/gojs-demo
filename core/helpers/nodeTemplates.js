@@ -17,7 +17,7 @@ export function createNodeTemplate(onNodeSelected) {
           name: "Shape",
           fill: "white",
           stroke: "#4a90e2",
-          strokeWidth: 2,
+          strokeWidth: 1,
           portId: "",
           fromLinkable: true,
           toLinkable: true,
@@ -31,7 +31,7 @@ export function createNodeTemplate(onNodeSelected) {
         { margin: 5 },
         $(
           go.Picture,
-          { width: 24, height: 24, margin: 5 },
+          { width: 40, height: 40, margin: 1 },
           new go.Binding("source")
         ),
         $(
