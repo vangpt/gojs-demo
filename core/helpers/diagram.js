@@ -1,5 +1,4 @@
 import { createNodeTemplate } from "./nodeTemplates.js";
-import { nodeDataArray } from "./data.js";
 import { showInspector } from "./inspector.js";
 
 export function initDiagram() {
@@ -11,8 +10,6 @@ export function initDiagram() {
   myDiagram.nodeTemplate = createNodeTemplate((node) => {
     showInspector(node.diagram, node.part);
   });
-
-  myDiagram.model = new go.GraphLinksModel(nodeDataArray);
 
   // add image
   const imagePart = new go.Part("Auto", {

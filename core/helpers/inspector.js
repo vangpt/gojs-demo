@@ -51,7 +51,7 @@ export function showInspector(diagram, part) {
     console.log("data", data);
 
     div.innerHTML = `
-      <h3>Properties</h3>
+      <h4>Properties</h4>
       <p><strong>Text:</strong> ${data.text}</p>
       <div>
         <input type="color" id="colorPicker" value="${data.color}" />

@@ -6,7 +6,11 @@ export function createNodeTemplate(onNodeSelected) {
   return $(
     go.Node,
     "Spot",
-    { selectionChanged: onNodeSelected },
+    {
+      selectionChanged: onNodeSelected,
+      resizable: true, // Enable resizing
+      resizeObjectName: "Shape",
+    },
     $(
       go.Panel,
       "Auto",
