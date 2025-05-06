@@ -7,34 +7,385 @@ export function initPalette(mainDiagram) {
     nodeTemplate: createNodeTemplate(() => {}),
   });
 
+  const tank1 = "F M 0 0 L 0 75 25 100 50 75 50 0z";
+  const tank2 = "F M 0 0 L 0 100 10 100 10 90 40 90 40 100 50 100 50 0z";
+
+  const tank3 = "F M 0 100 L 0 25 A 25 25 0 0 1 50 25 L 50 100 z";
+  const pump = "F M 8 10 A 2 2 0 1 1 6 8 L 9 8 L 9 10 Z M 5 11 A 1 1 0 0 1 7 9";
+  const valve = "F1 M0 0 L40 20 40 0 0 20z M20 10 L20 30 M12 30 L28 30";
+  const sensor =
+    "F M 0 0 L 15 15 L 15 20 L 5 20 L 5 15 L 0 15 L 0 10 L -2 10 L -2 4 L 0 4 Z";
+
+  const colors = {
+    black: "#151c26",
+    white: "#ffffff",
+    gray: "#2c323b",
+    green: "#7ba961",
+    blue: "#00a9b0",
+    pink: "#e483a2",
+    yellow: "#f9c66a",
+    orange: "#e48042",
+    red: "#ed2d44",
+  };
+
+  const tankPort = new go.Panel()
+    .bind("alignment", "a")
+    .bind("portId", "p")
+    .bind("fromSpot", "fs")
+    .bind("toSpot", "ts")
+    .add(
+      new go.Shape("Diamond", {
+        width: 10,
+        height: 10,
+        fill: colors.white,
+      })
+    );
+
+  const textDefaults = {
+    font: "10px InterVariable, sans-serif",
+    stroke: colors.white,
+  };
+
+  const statusPanelTemplate = new go.Panel("Spot").add(
+    new go.Shape({ width: 18, height: 18, fill: colors.white }).bind("fill"),
+    new go.TextBlock().set(textDefaults).bind("text")
+  );
+  const statusPanel = new go.Panel("Horizontal", {
+    width: 90,
+    height: 20,
+    itemTemplate: statusPanelTemplate,
+  }).bind("itemArray", "statuses");
+
+  const valuesTableItem = new go.Panel("TableRow").add(
+    new go.TextBlock("").set(textDefaults).bind("text", "label"),
+    new go.Panel("Spot", { column: 1 }).add(
+      new go.Shape({
+        stroke: colors.orange,
+        fill: colors.black,
+        margin: 2,
+        width: 40,
+        height: 15,
+      }),
+      new go.TextBlock("", {}).set(textDefaults).bind("text", "value")
+    ),
+    new go.TextBlock("", { column: 2, alignment: go.Spot.Left })
+      .set(textDefaults)
+      .bind("text", "unit")
+  );
+  const valuesTable = new go.Panel("Table", {
+    itemTemplate: valuesTableItem,
+  }).bind("itemArray", "values");
+
+  // TANKS
+  palette.nodeTemplateMap.add(
+    "",
+    // Outer spot panel holding inner spot panel (main element) and ports
+    new go.Node("Spot", {
+      itemTemplate: tankPort,
+    })
+      .bindTwoWay("location", "pos", go.Point.parse, go.Point.stringify)
+      .bind("itemArray", "ports")
+      .add(
+        // Inner spot panel holding Shape and Text label
+        new go.Panel("Spot").add(
+          new go.Shape({
+            geometryString: tank1,
+            strokeWidth: 1,
+            stroke: "gray",
+            width: 75,
+            height: 140,
+            fill: new go.Brush("Linear", {
+              0: go.Brush.darken(colors.white),
+              0.2: colors.white,
+              0.33: go.Brush.lighten(colors.white),
+              0.5: colors.white,
+              1: go.Brush.darken(colors.white),
+              start: go.Spot.Left,
+              end: go.Spot.Right,
+            }),
+          })
+            .bind("width")
+            .bind("height")
+            .bind("geometryString", "tankType"),
+          // tank label
+          new go.TextBlock({
+            font: "bold 13px InterVariable, sans-serif",
+            stroke: colors.black,
+          }).bind("text", "key")
+        )
+      )
+  );
+
+  // MONITORS
+  palette.nodeTemplateMap.add(
+    "monitor",
+    new go.Node("Auto")
+      .bindTwoWay("location", "pos", go.Point.parse, go.Point.stringify)
+      .add(
+        new go.Shape({
+          fill: colors.black,
+          stroke: colors.white,
+          strokeWidth: 2,
+        }),
+        new go.Panel("Vertical", { margin: 4 }).add(
+          // Title
+          new go.TextBlock("Title", {}).set(textDefaults).bind("text", "title"),
+          // Notifications
+          statusPanel,
+          // Values
+          valuesTable
+        )
+      )
+  );
+
+  palette.nodeTemplateMap.add(
+    "valve",
+    new go.Node("Vertical", {
+      locationSpot: new go.Spot(0.5, 1, 0, -21),
+      locationObjectName: "SHAPE",
+      selectionObjectName: "SHAPE",
+      rotatable: true,
+    })
+      .bindTwoWay("angle")
+      .bindTwoWay("location", "pos", go.Point.parse, go.Point.stringify)
+      .add(
+        new go.TextBlock({
+          background: colors.black,
+          alignment: go.Spot.Center,
+          textAlign: "center",
+          margin: 2,
+          editable: true,
+        })
+          .set(textDefaults)
+          .bind("text", "key")
+          // keep the text upright, even when the whole node has been rotated upside down
+          .bindObject("angle", "angle", (a) => (a === 180 ? 180 : 0)),
+        new go.Shape({
+          name: "SHAPE",
+          geometryString: valve,
+          strokeWidth: 2,
+          portId: "",
+          fromSpot: new go.Spot(1, 0.35),
+          toSpot: new go.Spot(0, 0.35),
+        })
+          .bind("fill", "color")
+          .bind("stroke", "color", (c) => go.Brush.darkenBy(c, 0.3))
+      )
+  );
+
+  // VALVES
+  palette.nodeTemplateMap.add(
+    "pump",
+    new go.Node("Vertical", {
+      locationSpot: new go.Spot(0.5, 1, 0, -21),
+      locationObjectName: "SHAPE",
+      selectionObjectName: "SHAPE",
+      rotatable: true,
+    })
+      .bindTwoWay("angle")
+      .bindTwoWay("location", "pos", go.Point.parse, go.Point.stringify)
+      .add(
+        new go.TextBlock({
+          background: colors.black,
+          alignment: go.Spot.Center,
+          textAlign: "center",
+          margin: 2,
+          editable: true,
+        })
+          .set(textDefaults)
+          .bind("text", "key")
+          // keep the text upright, even when the whole node has been rotated upside down
+          .bindObject("angle", "angle", (a) => (a === 180 ? 180 : 0)),
+        new go.Shape({
+          name: "SHAPE",
+          geometryString: pump,
+          width: 45,
+          height: 40,
+          strokeWidth: 2,
+          portId: "",
+          fromSpot: new go.Spot(1, 0.25),
+          toSpot: new go.Spot(0, 0.5),
+        })
+          .bind("fill", "color")
+          .bind("stroke", "color", (c) => Brush.darkenBy(c, 0.3))
+      )
+  );
+
+  // Sensor node, linked to a tank
+  palette.nodeTemplateMap.add(
+    "sensor",
+    new go.Node("Vertical")
+      .bindTwoWay("location", "pos", go.Point.parse, go.Point.stringify)
+      .add(
+        new go.Panel("Horizontal", { margin: 4 }).add(
+          new go.Shape({
+            fill: colors.black,
+            stroke: colors.white,
+            strokeWidth: 2,
+            geometryString: sensor,
+            portId: "",
+            fromSpot: new go.Spot(0, 0.4, 0, 0),
+          }),
+          new go.TextBlock({ margin: 2 }).set(textDefaults).bind("text", "key")
+        ),
+        new go.Panel("Horizontal").add(
+          new go.Panel("Spot", { column: 1 }).add(
+            new go.Shape({
+              stroke: colors.orange,
+              fill: colors.black,
+              margin: 2,
+              width: 40,
+              height: 15,
+            }),
+            new go.TextBlock("", {}).set(textDefaults).bind("text", "value")
+          ),
+          new go.TextBlock("", { column: 2, alignment: go.Spot.Left })
+            .set(textDefaults)
+            .bind("text", "unit")
+        )
+      )
+  );
+
+  // Dữ liệu thiết bị
   palette.model = new go.GraphLinksModel([
+    // TANKS
     {
-      color: "#e6f2ff",
-      source: "../../assets/images/toeic.png",
+      key: "Tank1",
+      tankType: tank3,
+      color: colors.black,
+      pos: "287 19",
+      ports: [
+        { p: "BL1", a: new go.Spot(0, 1, 0, -50) },
+        { p: "BL2", a: new go.Spot(0, 1, 0, -30) },
+        { p: "BL3", a: new go.Spot(0, 1, 0, -10) },
+        {
+          p: "BR",
+          fs: go.Spot.RightSide,
+          a: new go.Spot(1, 1, 0, -30),
+        },
+        {
+          p: "SensorR",
+          type: "sensor",
+          ts: go.Spot.RightSide,
+          a: new go.Spot(1, 0.5, 0, 0),
+        },
+      ],
     },
     {
-      text: "Text",
-      color: "#ffe6e6",
-      source: "../../assets/images/toeic.png",
-      tooltip: "Text",
+      key: "Tank2",
+      color: colors.black,
+      pos: "244 418",
+      ports: [
+        { p: "TL", a: new go.Spot(0, 0, 0, 30) },
+        { p: "BR", a: new go.Spot(1, 1, 0, -50), fs: go.Spot.Right },
+        { p: "B", a: new go.Spot(0.5, 1, 0, 0) },
+      ],
     },
     {
-      text: "Wait",
-      color: "#fffbe6",
-      source: "../../assets/images/toeic.png",
-      tooltip: "Chờ một khoảng thời gian",
+      key: "Tank3",
+      color: colors.black,
+      tankType: tank2,
+      pos: "297 261",
+      width: 70,
+      height: 120,
+      ports: [
+        { p: "TL", a: new go.Spot(0, 0, 0, 30) },
+        { p: "BL", a: new go.Spot(0, 1, 0, -30) },
+        {
+          p: "TR",
+          fs: go.Spot.RightSide,
+          a: new go.Spot(1, 0, 0, 30),
+        },
+        {
+          p: "BR",
+          ts: go.Spot.RightSide,
+          a: new go.Spot(1, 1, 0, -30),
+        },
+      ],
     },
     {
-      text: "Condition",
-      color: "#e6ffe6",
-      source: "../../assets/images/toeic.png",
-      tooltip: "Rẽ nhánh điều kiện",
+      key: "Tank4",
+      color: colors.black,
+      pos: "529 370",
+      width: 60,
+      height: 80,
+      ports: [
+        { p: "T1", a: new go.Spot(0, 0, 10, 0), ts: go.Spot.Top },
+        { p: "T2", a: new go.Spot(0, 0, 30, 0), ts: go.Spot.Top },
+        { p: "T3", a: new go.Spot(0, 0, 50, 0), ts: go.Spot.Top },
+        { p: "B", a: new go.Spot(0.5, 1, 0, 0), fs: go.Spot.Bottom },
+      ],
     },
+    // MONITOR PANELS
     {
-      text: "End",
-      color: "#f2e6ff",
-      source: "../../assets/images/toeic.png",
-      tooltip: "Kết thúc luồng",
+      key: "cTCV102",
+      title: "Monitor TCV102",
+      category: "monitor",
+      pos: "32 35",
+      values: [
+        { label: "SV", unit: "°C", value: "12.0" },
+        { label: "PV", unit: "°C", value: "12.0" },
+        { label: "OP", unit: "%", value: "25.0" },
+      ],
+      statuses: [
+        { fill: colors.green },
+        { fill: colors.green },
+        { fill: colors.green },
+      ],
+    },
+    // VALVES
+    {
+      key: "TCV102",
+      category: "valve",
+      color: colors.red,
+      pos: "197 130",
+    },
+    // PUMPS
+    {
+      key: "P102",
+      category: "pump",
+      color: colors.pink,
+      pos: "720 605.3",
+      angle: 180,
+    },
+    // SENSORS:
+    {
+      key: "S1",
+      category: "sensor",
+      value: "12.0",
+      pos: "385 68",
+      unit: "°C",
     },
   ]);
+
+  // palette.model = new go.GraphLinksModel([
+  //   {
+  //     color: "#e6f2ff",
+  //     source: "../../assets/images/toeic.png",
+  //   },
+  //   {
+  //     text: "Text",
+  //     color: "#ffe6e6",
+  //     source: "../../assets/images/toeic.png",
+  //     tooltip: "Text",
+  //   },
+  //   {
+  //     text: "Wait",
+  //     color: "#fffbe6",
+  //     source: "../../assets/images/toeic.png",
+  //     tooltip: "Chờ một khoảng thời gian",
+  //   },
+  //   {
+  //     text: "Condition",
+  //     color: "#e6ffe6",
+  //     source: "../../assets/images/toeic.png",
+  //     tooltip: "Rẽ nhánh điều kiện",
+  //   },
+  //   {
+  //     text: "End",
+  //     color: "#f2e6ff",
+  //     source: "../../assets/images/toeic.png",
+  //     tooltip: "Kết thúc luồng",
+  //   },
+  // ]);
 }
