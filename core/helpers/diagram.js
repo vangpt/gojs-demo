@@ -218,7 +218,7 @@ export function initDiagram() {
   // Sensor node, linked to a tank
   myDiagram.nodeTemplateMap.add(
     "sensor",
-    new go.Node("Vertical")
+    new go.Node("Vertical", { background: colors.black })
       .bindTwoWay("location", "pos", go.Point.parse, go.Point.stringify)
       .add(
         new go.Panel("Horizontal", { margin: 4 }).add(
@@ -249,22 +249,234 @@ export function initDiagram() {
         )
       )
   );
-  // add image
-  const imagePart = new go.Part("Auto", {
-    resizable: true,
-    resizeObjectName: "PICTURE",
-    locationSpot: go.Spot.Center,
+
+  myDiagram.linkTemplateMap.add(
+    "",
+    new go.Link({
+      routing: go.Routing.AvoidsNodes,
+      corner: 12,
+      layerName: "Background",
+      toShortLength: 3,
+    })
+      .bind("fromEndSegmentLength", "fromEndSeg")
+      .bind("toEndSegmentLength", "toEndSeg")
+      .add(
+        new go.Shape({
+          strokeWidth: 8,
+          stroke: colors.black,
+          isPanelMain: true,
+        }),
+        new go.Shape({
+          strokeWidth: 3.5,
+          stroke: colors.green,
+          isPanelMain: true,
+        }).bind("stroke", "color"),
+        new go.Shape({
+          stroke: colors.green,
+          fill: colors.green,
+          toArrow: "Triangle",
+        })
+          .bind("stroke", "color")
+          .bind("fill", "color"),
+        // Link label, invisible unless text is specified
+        new go.Panel("Auto", { visible: false })
+          .bind("visible", "text", (t) => true)
+          .add(
+            new go.Shape("RoundedRectangle", {
+              strokeWidth: 1,
+              fill: colors.gray,
+            }),
+            new go.TextBlock({ margin: new go.Margin(3, 1, 1, 1) })
+              .set(textDefaults)
+              .bind("text")
+          )
+      )
+  );
+
+  myDiagram.model = new go.GraphLinksModel({
+    copiesArrays: true,
+    copiesArrayObjects: true,
+    linkFromPortIdProperty: "fromPort",
+    linkToPortIdProperty: "toPort",
+    nodeDataArray: [
+      // TANKS
+      {
+        key: "Tank1",
+        tankType: tank3,
+        color: colors.black,
+        pos: "0 200",
+        ports: [
+          { p: "BL1", a: new go.Spot(0, 1, 0, -50) },
+          { p: "BL2", a: new go.Spot(0, 1, 0, -30) },
+          { p: "BL3", a: new go.Spot(0, 1, 0, -10) },
+          {
+            p: "BR",
+            fs: go.Spot.RightSide,
+            a: new go.Spot(1, 1, 0, -30),
+          },
+          {
+            p: "SensorR",
+            type: "sensor",
+            ts: go.Spot.RightSide,
+            a: new go.Spot(1, 0.5, 0, 0),
+          },
+        ],
+      },
+      {
+        key: "Tank2",
+        color: colors.black,
+        pos: "0 0",
+        ports: [
+          { p: "TL", a: new go.Spot(0, 0, 0, 30) },
+          { p: "BR", a: new go.Spot(1, 1, 0, -50), fs: go.Spot.Right },
+          { p: "B", a: new go.Spot(0.5, 1, 0, 0) },
+        ],
+      },
+      {
+        key: "Tank3",
+        color: colors.black,
+        tankType: tank2,
+        pos: "0 400",
+        width: 70,
+        height: 120,
+        ports: [
+          { p: "TL", a: new go.Spot(0, 0, 0, 30) },
+          { p: "BL", a: new go.Spot(0, 1, 0, -30) },
+          {
+            p: "TR",
+            fs: go.Spot.RightSide,
+            a: new go.Spot(1, 0, 0, 30),
+          },
+          {
+            p: "BR",
+            ts: go.Spot.RightSide,
+            a: new go.Spot(1, 1, 0, -30),
+          },
+        ],
+      },
+
+      // MONITOR PANELS
+      {
+        key: "cTCV102",
+        title: "Monitor TCV102",
+        category: "monitor",
+        pos: "600 200",
+        values: [
+          { label: "SV", unit: "°C", value: "12.0" },
+          { label: "PV", unit: "°C", value: "12.0" },
+          { label: "OP", unit: "%", value: "25.0" },
+        ],
+        statuses: [
+          { fill: colors.green },
+          { fill: colors.green },
+          { fill: colors.green },
+        ],
+      },
+      // VALVES
+      {
+        key: "Valve-TCV102",
+        category: "valve",
+        color: colors.red,
+        pos: "400 400",
+      },
+      // PUMPS
+      {
+        key: "Pump-P102",
+        category: "pump",
+        color: colors.pink,
+        pos: "400 0",
+        angle: 180,
+      },
+      // SENSORS:
+      {
+        key: "S1",
+        category: "sensor",
+        value: "12.0",
+        pos: "100 0",
+        unit: "°C",
+      },
+    ],
+    linkDataArray: [
+      {
+        from: "Tank1",
+        to: "Tank2",
+        text: "text",
+        color: colors.red,
+        fromPort: "BR",
+        toPort: "BR",
+      },
+      {
+        from: "Tank2",
+        to: "Pump-P102",
+        text: "text",
+        color: colors.red,
+        fromPort: "BR",
+        toPort: "BR",
+      },
+      {
+        from: "Tank2",
+        to: "S1",
+        text: "text",
+        color: colors.red,
+        fromPort: "BR",
+        toPort: "BR",
+      },
+      {
+        category: "monitor",
+        from: "Pump-P102",
+        to: "cTCV102",
+        color: colors.yellow,
+      },
+      {
+        from: "Tank3",
+        to: "Valve-TCV102",
+        text: "text",
+        color: colors.yellow,
+        fromPort: "BR",
+        toPort: "BR",
+      },
+      {
+        from: "Valve-TCV102",
+        to: "cTCV102",
+        text: "text",
+        color: colors.green,
+        fromPort: "BR",
+        toPort: "BR",
+      },
+    ],
   });
 
-  // imagePart.add(
-  //   new go.Picture("../../assets/images/toeic.png", {
-  //     name: "PICTURE",
-  //     width: 200,
-  //     height: 200,
-  //   })
-  // );
+  const socket = new WebSocket("ws://localhost:3000");
 
-  myDiagram.add(imagePart);
+  socket.onopen = () => {
+    console.log("Connected to server");
+  };
+  socket.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    console.log("Received:", data.number);
+    myDiagram.commit(() => {
+      const controlNodes = ["cTCV102"].map((k) => myDiagram.findNodeForKey(k));
+      for (const n of controlNodes) {
+        const vals = n.data.statuses;
+        myDiagram.model.set(
+          vals[0],
+          "fill",
+          data.number % 2 === 0 ? colors.green : colors.white
+        );
+        myDiagram.model.set(
+          vals[1],
+          "fill",
+          data.number % 2 === 1 ? colors.yellow : colors.white
+        );
+      }
+    }, null);
+  };
+  socket.onerror = (err) => {
+    console.error("WebSocket error:", err);
+  };
+  socket.onclose = () => {
+    console.log("Disconnected from server");
+  };
 
   return myDiagram;
 }

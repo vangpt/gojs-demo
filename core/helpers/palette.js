@@ -214,7 +214,7 @@ export function initPalette(mainDiagram) {
   // Sensor node, linked to a tank
   palette.nodeTemplateMap.add(
     "sensor",
-    new go.Node("Vertical")
+    new go.Node("Vertical", { background: colors.black })
       .bindTwoWay("location", "pos", go.Point.parse, go.Point.stringify)
       .add(
         new go.Panel("Horizontal", { margin: 4 }).add(
